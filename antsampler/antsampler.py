@@ -28,7 +28,7 @@ class Ant:
         
         self.initialise_ant()
         
-    def self.initialise_ant(self):
+    def initialise_ant(self):
         """
         Put the ant in a new spot
         """
@@ -75,7 +75,7 @@ class Ant:
         old_marks = n_marks(self.position, marked_points)
         while True:
             new_position = position + rand_walker()
-            if np.prod([b[0] < xi < b[1] for xi, b in zip(new_position, self.bounds)]:
+            if np.prod([b[0] < xi < b[1] for xi, b in zip(new_position, self.bounds)]):
                 new_marks  = n_marks(new_position, marked_points)
                 if new_marks == 0 or old_marks/new_marks > np.random.uniform():
                     break
@@ -135,6 +135,9 @@ class AntSampler:
         
         Arguments:
             :bool explore: whether or not to explore the space (default: True)
+        
+        Returns:
+            :np.ndarray: samples
         """
         if explore:
             for _ in tqdm(range(n_steps_exp), desc = 'Exploring'):
@@ -147,3 +150,5 @@ class AntSampler:
                 for _ in range(self.thinning):
                     ant.move(self.marked_points)
                 self.points.append(ant.position)
+
+        return np.array(self.points)
