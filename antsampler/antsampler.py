@@ -141,12 +141,12 @@ class AntSampler:
             :np.ndarray: samples
         """
         if explore:
-            for _ in tqdm(range(n_steps_exp), desc = 'Exploring'):
+            for _ in tqdm(range(self.n_steps_exp), desc = 'Exploring'):
                 for ant in self.ant_hill:
                     ant.move(self.marked_points)
                     ant.mark(self.marked_points)
         
-        for _ in tqdm(range(n_draws), desc = 'Sampling'):
+        for _ in tqdm(range(self.n_draws), desc = 'Sampling'):
             for ant in self.ant_hill:
                 for _ in range(self.thinning):
                     ant.move(self.marked_points)
