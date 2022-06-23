@@ -72,11 +72,11 @@ class Ant:
         Arguments:
             :list marked_points: list of marked points
         """
-        old_marks = n_marks(self.position, marked_points)
+        old_marks = self.n_marks(self.position, marked_points)
         while True:
             new_position = position + rand_walker()
             if np.prod([b[0] < xi < b[1] for xi, b in zip(new_position, self.bounds)]):
-                new_marks  = n_marks(new_position, marked_points)
+                new_marks  = self.n_marks(new_position, marked_points)
                 if new_marks == 0 or old_marks/new_marks > np.random.uniform():
                     break
         self.position = new_position
