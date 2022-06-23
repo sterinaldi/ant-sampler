@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import expon
+from scipy.stats import multivariate_normal as mn
 from tqdm import tqdm
 
 class Ant:
@@ -23,16 +23,18 @@ class Ant:
                        
         self.log_probability = log_probability
         self.bounds          = np.atleast_2d(bounds)
-        self.rand_walker     = expon(mean_free_path).rvs
+        dim                  = len(dx)
+        self.rand_walker     = mn(np.zeros(dim), np.identity(dim)*mean_free_path).rvs
         self.dx              = dx
         
         self.initialise_ant()
+        self.max_logP = -np.inf
         
     def initialise_ant(self):
         """
         Put the ant in a new spot
         """
-        self.position = np.random.uniform(low = self.bounds[:,0], high = self.bounds[:,1])
+        self.position = np.atleast_1d(np.random.uniform(low = self.bounds[:,0], high = self.bounds[:,1]))
 
     def mark(self, marked_points):
         """
@@ -62,8 +64,10 @@ class Ant:
         Returns:
             :int: local number of marked points
         """
-        local_bounds = np.array([position - dx, position + dx]).T
-        return len(np.where((np.prod(bounds[:,0] < x, axis = 1) & np.prod(x < bounds[:,1], axis = 1)))[0])
+        local_bounds = np.array([position - self.dx, position + self.dx]).T
+        if len(marked_points) > 0:
+            return len(np.where((np.prod(local_bounds[:,0] < marked_points, axis = 1) & np.prod(marked_points < local_bounds[:,1], axis = 1)))[0])
+        return 0
         
     def move(self, marked_points):
         """
@@ -73,12 +77,13 @@ class Ant:
             :list marked_points: list of marked points
         """
         old_marks = self.n_marks(self.position, marked_points)
-        while True:
-            new_position = position + rand_walker()
+        flag = True
+        while flag:
+            new_position = self.position + self.rand_walker()
             if np.prod([b[0] < xi < b[1] for xi, b in zip(new_position, self.bounds)]):
                 new_marks  = self.n_marks(new_position, marked_points)
                 if new_marks == 0 or old_marks/new_marks > np.random.uniform():
-                    break
+                    flag = False
         self.position = new_position
 
 class AntSampler:
@@ -102,6 +107,7 @@ class AntSampler:
                        dx,
                        n_steps_exp,
                        n_draws,
+                       burnin = 1000,
                        thinning = 1,
                        n_ants = 1,
                        ):
@@ -114,6 +120,7 @@ class AntSampler:
         self.n_draws         = int(n_draws)
         self.n_ants          = n_ants
         self.thinning        = thinning
+        self.burnin          = burnin
     
         self.ant_hill      = [Ant(self.log_probability, self.bounds, self.mean_free_path, self.dx) for _ in range(self.n_ants)]
         self.points        = []
@@ -144,12 +151,16 @@ class AntSampler:
             :np.ndarray: samples
         """
         if explore:
-            for _ in tqdm(range(self.n_steps_exp), desc = 'Exploring'):
+            for _ in tqdm(range(self.n_steps_exp//self.n_ants), desc = 'Exploring'):
                 for ant in self.ant_hill:
                     ant.move(self.marked_points)
                     ant.mark(self.marked_points)
+        self.initialise()
+        for ant in tqdm(self.ant_hill, desc = 'Termalizing'):
+            for _ in range(self.thinning):
+                ant.move(self.marked_points)
         
-        for _ in tqdm(range(self.n_draws), desc = 'Sampling'):
+        for _ in tqdm(range(self.n_draws//self.n_ants), desc = 'Sampling'):
             for ant in self.ant_hill:
                 for _ in range(self.thinning):
                     ant.move(self.marked_points)
