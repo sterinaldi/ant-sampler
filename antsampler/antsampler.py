@@ -103,6 +103,7 @@ class AntSampler:
                        n_steps_exp,
                        n_draws,
                        thinning = 1,
+                       n_ants = 1,
                        ):
         
         self.log_probability = log_probability
