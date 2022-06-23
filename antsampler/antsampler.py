@@ -116,6 +116,9 @@ class AntSampler:
         self.thinning        = thinning
     
         self.ant_hill      = [Ant(self.log_probability, self.bounds, self.mean_free_path, self.dx) for _ in range(self.n_ants)]
+        self.points        = []
+        self.marked_points = []
+        
         
     def initialise(self, clear_marks = False):
         """
