@@ -26,7 +26,7 @@ class Ant:
         self.bounds = np.atleast_2d(bounds)
         dim = len(dx)
         self.rand_walker = mn(np.zeros(dim),
-                              np.identity(dim)*mean_free_path).rvs
+                              np.identity(dim) * mean_free_path).rvs
         self.dx = dx
         
         self.initialise_ant()
@@ -54,10 +54,10 @@ class Ant:
             :list: updated list of marked points
         """
         logP = self.log_probability(self.position)
-        if logP > self.max_logP:
-            self.max_logP = logP
         if 1 - np.exp(logP - self.max_logP) > np.random.uniform():
             marked_points.append(self.position)
+        if logP > self.max_logP:
+            self.max_logP = logP
         return marked_points
     
     def n_marks(self, position, marked_points):
